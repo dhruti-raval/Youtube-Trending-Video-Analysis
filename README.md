@@ -5,117 +5,151 @@
 **Type:** End-to-End Data Analysis Portfolio Project
 
 ---
+# YouTube Trending Video Analysis – India 🇮🇳
 
-## Project Overview
+**Tools:** SQL (Microsoft SQL Server) · Power BI · DAX
+**Dataset:** YouTube Trending Videos – India (Kaggle)
+**Type:** End-to-End Data Analysis Portfolio Project
 
-What actually makes a video trend on YouTube in India? Is it the category? The channel? The time it was uploaded? Or is raw view count even the right metric to look at?
+---
 
-This project explores those questions using real trending video data from India's YouTube platform. The goal was to go beyond surface-level numbers and uncover the patterns that separate genuinely engaging content from content that simply gets watched.
+## Problem Statement
 
-The analysis was built end-to-end — from raw data cleaning and SQL transformation to interactive Power BI dashboards and insight communication.
+A video with millions of views is not necessarily a video people care about. On YouTube, attention shows up in two ways: **reach** (how many people watched) and **resonance** (how many of them liked or commented). Creators and marketers in India who judge content only by view count can end up backing the wrong categories, the wrong channels and the wrong publishing hours.
+
+This project analyses about 16,200 YouTube videos from India to answer one question: **what separates content that is merely watched from content that genuinely connects with its audience?** It breaks that question into four parts:
+
+1. Which content categories earn the strongest audience response, not just the most videos?
+2. Who dominates reach, and is that dominance driven by popular videos or by upload volume?
+3. Does high reach go together with high engagement?
+4. Does the hour a video is published affect its views?
+
+**Engagement rate** is defined as (likes + comments) / views.
+
+---
+
+## Dataset at a Glance
+
+| | |
+|---|---|
+| Videos analysed | 16,199 |
+| Channels | 980 |
+| Total views | about 22.2 billion |
+| Overall engagement rate | 3.03% |
+| Publish dates | 78% published in 2025–2026 |
 
 ---
 
 ## What Was Built
 
-### 1. SQL Data Pipeline
-- Designed and executed a full data pipeline in Microsoft SQL Server
-- Performed DDL operations, data type validation using `TRY_CAST` and `NULLIF`, and null handling
-- Built a manually created category lookup table to resolve YouTube API category ID mapping (no API access used)
-- Applied advanced T-SQL: `RANK() OVER (PARTITION BY)`, `DATEPART`, `CASE` statements, multi-table `JOIN`s, subqueries, and window functions
+### 1. SQL Data Pipeline (SQL Server)
+- Converted ISO-format publish timestamps (`2026-02-26T11:41:22Z`) from text to `DATETIME` using `REPLACE` and `TRY_CAST`, then validated the conversion by checking for NULLs and counting valid rows
+- Calculated engagement rate with `NULLIF` to avoid division by zero on zero-view videos
+- Checked the dislikes column for usable data before removing it from the analysis table
+- Built a category lookup table to map YouTube's numeric category IDs to readable names (no API access used) and joined it to the main table
+- Ranked videos within each channel using `RANK() OVER (PARTITION BY ...)` and extracted publish hour with `DATEPART`
 
-### 2. Power BI Dashboards (4 Dashboards)
-- Engagement Rate by Category
-- Channel-wise Performance Analysis
-- Top 10 Channels by Total Views
-- Best Time to Publish Videos
+### 2. Power BI Dashboards (4 pages)
+| Page | What it shows |
+|---|---|
+| Engagement Rate by Category | Engagement rate for categories with at least 100 videos |
+| Top 10 Channels by Total Views | Channel reach, with average views and video count in the tooltip |
+| Best Time to Publish Videos | Average views per video by hour of day (IST), with video count in the tooltip |
+| Video-Level Table | Individual videos sorted by views, with likes, comments and engagement rate |
+
+DAX measures: `Engagement Rate`, `Avg Views`, `Video Count`, plus calculated columns converting UTC publish time to IST and extracting the IST hour.
 
 ---
 
-## The Story: What the Data Revealed
+## Findings
 
-### Chapter 1 — Not All Categories Are Equal
-
-The first question was simple: which type of content actually connects with audiences?
-
-The data showed clear variation in engagement rates across categories — and the pattern was immediately interesting. Categories with the highest engagement were not always the ones with the most videos. Emotionally resonant, entertaining, and relatable content consistently drove stronger audience reactions (likes, comments) than purely informational content.
-
-The critical insight here: **high video volume does not guarantee high engagement**. Some categories flooded the trending list with content but showed relatively weak audience interaction. This tells creators and marketers something important — reach is not the same as resonance.
+### 1. Which categories earn the strongest response?
 
 ![Engagement by Category](engagement_by_category.png)
 
----
+Six categories with 100 or more videos cover 98.5% of the data. Among them:
 
-### Chapter 2 — A Few Channels Dominate Everything
+| Category | Videos | Engagement rate |
+|---|---|---|
+| Entertainment | 3,070 | 3.49% |
+| Gaming | 4,901 | 3.26% |
+| People & Blogs | 858 | 3.16% |
+| News & Politics | 149 | 2.92% |
+| Music | 6,610 | 2.49% |
+| Film & Animation | 351 | 1.64% |
 
-Once category patterns were clear, the next question was: who is actually winning?
+- Entertainment, Gaming and People & Blogs are close together, so none of them is a clear winner.
+- **Music is the largest category (about 41% of all videos) but engages below the 3.03% average.** Volume did not buy resonance.
+- Categories with fewer than 100 videos were left out of the chart. Travel & Events (5.31%, 13 videos) and Science & Technology (4.44%, 49 videos) look strongest, but a handful of videos can swing a rate that small.
 
-The channel performance analysis revealed a stark concentration of dominance. A small number of creators consistently appeared multiple times in trending content, with engagement rates of 5–6% — well above the overall average of approximately 3%. Gaming channels stood out particularly, showing sustained high engagement across multiple videos, pointing to loyal, repeat audiences.
+### 2. Who dominates reach, and why?
 
-But here is where it gets interesting: some channels with massive view counts showed relatively low engagement rates. Meanwhile, channels with moderate views but higher engagement were quietly outperforming them in terms of actual audience connection.
+![Top 10 Channels by Total Views](top_channels_by_views.png)
 
-**Reach and resonance are two different things** — and this project made that distinction visible.
+- **Reach is concentrated.** The top 3 channels (Mythpat, SATVIK, ProBoiz 95) hold 39.8% of all views, and the top 10 hold 66.1%, out of 980 channels.
+- **Mythpat leads with 4.2 billion views on fewer videos than the runner-up** (429 vs 500). He averages about 9.8M views per video against SATVIK's 4.7M, so per-video popularity, not upload volume, put him first.
+- SATVIK edges out ProBoiz 95 for second place on volume: ProBoiz 95 averages more per video (about 5.4M) but has fewer videos (426 vs 500).
+- **Several top-10 channels reach huge audiences with very low engagement:** Carry Depie (0.88%), Sur Music (0.81%) and Aashish Yadav Entertainment (0.88%). In contrast, BANGTANTV (11.6%), RJ Raunac (5.1%) and Mythpat (4.7%) combine reach with strong response.
 
-![Channel Performance](channel_performance.png)
+### 3. Does high reach mean high engagement?
 
----
+![Video-Level Table](video_table.png)
 
-### Chapter 3 — The Winner-Takes-Most Dynamic
+No. In the video-level table, Sur Music's top video has about 274M views but only 0.55% engagement, while Mythpat's 69M-view video reaches 5.09%. Engagement rate says something view count cannot: how much of the audience reacted.
 
-Zooming out to total views across the top 10 channels confirmed what the channel analysis hinted at: YouTube in India follows a winner-takes-most pattern.
-
-The top channel had a substantial gap over the second and third positions. The top three channels collectively accounted for a major share of total views across the entire dataset. Mid-tier channels (ranked 4th to 10th) competed more closely among themselves, but the gap between tier one and the rest was significant.
-
-Diverse content categories appeared in the top 10 — gaming, entertainment, music — which confirmed that no single category monopolizes reach. But what the dominant channels shared was consistent uploads, strong subscriber bases, and clear algorithmic visibility.
-
-![Top Channels by Views](top_channels_by_views.png)
-
----
-
-### Chapter 4 — Timing Is Not Optional
-
-The final piece of the puzzle was timing. Does it actually matter when you publish?
-
-The data said yes — decisively.
-
-Peak viewership concentrated around **5 PM to 7 PM**, aligning with post-work and post-academic hours when audiences shift into leisure mode. A secondary peak appeared in the late afternoon. Early morning and late night showed significantly lower performance across the board.
-
-The gap between peak and off-peak hours was substantial enough to conclude that publishing time directly impacts initial traction — and initial traction is what triggers YouTube's recommendation algorithm. Timing is not a minor detail. It is a strategic decision.
+### 4. Does publishing time matter?
 
 ![Best Publish Time](best_publish_time.png)
 
+Publish times were converted from UTC to IST, then averaged per video for each hour of the day.
+
+- **Noon IST is the most dependable strong hour:** about 2.2M average views across 504 videos.
+- 4 AM IST has the highest average (2.55M) but only 246 videos behind it, so it is not treated as reliable. 2 AM (1.96M, 721 videos) and 7 PM (1.78M, 909 videos) are also strong.
+- The weakest hour, 10 AM IST, averages only 0.16M, so the best well-supported hour (noon) averages about 14 times more.
+- There is no single "evening peak". 5 PM and 6 PM average 1.35M and 1.64M, below noon.
+
 ---
 
-## Conclusion
+## Analytical Decisions
 
-Taken together, the four dashboards tell a coherent story about how YouTube trending works in India.
+- **Average, not sum, for publishing time.** Summing views by hour only measures how many videos were uploaded in that hour. The average per video measures how well they performed.
+- **Minimum of 100 videos per category.** Small groups give unstable averages; the exclusion is stated on the dashboard.
+- **Ratio of totals for engagement.** Engagement is (total likes + total comments) / total views, so large videos carry more weight than small ones.
+- **UTC to IST.** Source timestamps carry a `Z` (UTC). They were shifted by 5 hours 30 minutes before taking the hour, because a half-hour offset cannot be fixed by adding to the hour number alone.
+- **Video counts beside every average.** Each average shows how many videos stand behind it.
 
-**Engagement rate is a more meaningful metric than view count.** High views with low engagement signals passive consumption. High engagement with moderate views signals genuine audience connection — and that is what drives long-term growth.
+---
 
-**Content category shapes engagement ceiling.** Creators in emotionally engaging categories start with a structural advantage. Volume alone cannot overcome a low-engagement category.
+## Limitations
 
-**Dominance is concentrated.** A small number of channels capture a disproportionate share of attention, driven by consistency, algorithmic visibility, and loyal audiences — not just one viral moment.
+- **Per-channel cap in the data.** No channel has more than 500 videos, and 22 channels sit at exactly 500 (about 68% of all rows come from them). This looks like a collection limit, so channel totals and video counts for those channels are lower bounds, and the dataset may not be a pure record of the trending list.
+- Hour of day is the **publish** hour, not the hour a video started trending.
+- Averages can be pulled up by a few viral videos; medians were not checked.
+- 196 rows have no `video_id`, and some non-English titles display with broken characters because of a text-encoding issue on import.
+- Findings describe this dataset and do not prove why audiences behave this way.
 
-**Timing amplifies content.** Even strong content underperforms when published at the wrong hour. Evening slots between 5–7 PM consistently outperformed all other windows.
+---
 
-For creators, marketers, and analysts working with YouTube data — the takeaway is the same: **optimize for engagement, not just reach. Publish in the right category, at the right time, with consistency.**
+## Takeaways
+
+- Judge content by engagement as well as views. High views with low engagement points to passive consumption.
+- Large categories are not automatically engaged ones. Music is the biggest and engages below average.
+- Reach is concentrated in a few channels, and the leaders win in different ways: Mythpat on per-video popularity, SATVIK on volume.
+- When choosing a publishing hour, check how many videos stand behind each average before trusting it.
 
 ---
 
 ## Repository Structure
 
 ```
-Youtube-Trending-Video-Analysis/
-├── youtube-trending-analysis.sql     # Full SQL data pipeline
-├── youtube-trending-analysis.pbix    # Power BI dashboard file
-├── engagement_by_category.png        # Dashboard screenshot
-├── channel_performance.png           # Dashboard screenshot
-├── top_channels_by_views.png         # Dashboard screenshot
-├── best_publish_time.png             # Dashboard screenshot
-└── README.md
+├── README.md
+├── sql/                         # SQL Server scripts
+├── powerbi/                     # .pbix file
+├── engagement_by_category.png
+├── top_channels_by_views.png
+├── best_publish_time.png
+└── video_table.png
 ```
-
----
 
 ## About
 
